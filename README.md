@@ -149,7 +149,3 @@ You are free to modify and adapt it for your own needs.
 ## 🙌 Acknowledgements
 
 Built with the goal of helping small creators manage sales more easily at events and conventions.
-
-```
-
-```
