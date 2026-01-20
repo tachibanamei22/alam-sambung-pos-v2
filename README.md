@@ -1,4 +1,3 @@
-````md
 # Alam Sambung POS
 
 **Alam Sambung POS** is a simple, offline-first Point of Sale (POS) web app built for small merchandise booths, such as anime convention stalls.
@@ -67,7 +66,6 @@ The app is designed to be:
 ```bash
 npm install
 ```
-````
 
 ### 2. Run locally
 
@@ -151,3 +149,7 @@ You are free to modify and adapt it for your own needs.
 ## 🙌 Acknowledgements
 
 Built with the goal of helping small creators manage sales more easily at events and conventions.
+
+```
+
+```
