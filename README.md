@@ -1,10 +1,3 @@
-Below is a **clean, beginner-friendly, copy-paste–ready `README.md`** for your project.
-It is written for **real users (your friends)** and **future you**, not corporate fluff.
-
-You can paste this directly into a file named **`README.md`** in your project root.
-
----
-
 ````md
 # Alam Sambung POS
 
