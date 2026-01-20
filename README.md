@@ -1,73 +1,160 @@
-# React + TypeScript + Vite
+Below is a **clean, beginner-friendly, copy-paste–ready `README.md`** for your project.
+It is written for **real users (your friends)** and **future you**, not corporate fluff.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+You can paste this directly into a file named **`README.md`** in your project root.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+````md
+# Alam Sambung POS
 
-## React Compiler
+**Alam Sambung POS** is a simple, offline-first Point of Sale (POS) web app built for small merchandise booths, such as anime convention stalls.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The app is designed to be:
 
-## Expanding the ESLint configuration
+- ✅ Easy to use
+- ✅ Fully offline after installation
+- ✅ Single-device friendly
+- ✅ No server, no account, no cloud dependency
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## ✨ Features
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 📦 Items Management
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Add items with:
+  - Name
+  - Price
+  - Stock
+  - Optional image
+- Edit item name, price, and image
+- Increase / decrease stock
+- Delete items that are no longer sold  
+  _(sales history remains safe)_
+
+### 🛒 Checkout
+
+- Tap items to add to cart
+- Increase / decrease quantity safely (no overselling)
+- Automatic total calculation
+- One-tap **Complete Sale**
+
+### 📊 Recap
+
+- View all past transactions
+- See total sales and transaction count
+- Item names and quantities are preserved per sale
+- **Reset Event** button to start a new convention/day
+
+### 📱 PWA (Installable App)
+
+- Installable on:
+  - Android (Chrome)
+  - iPhone / iPad (Safari)
+  - Desktop (Chrome / Edge)
+- Works fully offline after first install
+- Data stored locally on the device (IndexedDB)
+
+---
+
+## 🧠 Design Philosophy
+
+- **Offline-first**: internet is not required during events
+- **Single-device POS**: avoids sync conflicts and human error
+- **Low learning curve**: usable by non-technical users
+- **Local data ownership**: no external servers
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+````
+
+### 2. Run locally
+
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 3. Run on local network (for phone / tablet testing)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev -- --host
 ```
+
+Then open the **Network URL** shown in terminal on your phone/tablet browser.
+
+---
+
+## 📲 Install on Phone / Tablet (PWA)
+
+### Android (Chrome)
+
+1. Open the app URL in Chrome
+2. Tap menu (⋮)
+3. Select **Add to Home Screen**
+
+### iPhone / iPad (Safari only)
+
+1. Open the app URL in Safari
+2. Tap **Share**
+3. Select **Add to Home Screen**
+
+> ⚠️ Chrome on iOS does NOT support PWA install — use Safari.
+
+---
+
+## 📴 Offline Usage
+
+After installation:
+
+- The app works without internet
+- Data is saved locally on the device
+- Do **NOT** clear browser data unless you want to reset everything
+
+---
+
+## 🔄 Event Reset
+
+Use **Reset Event** in the Recap page to:
+
+- Clear all sales history
+- Start a new convention/day
+- Keep items and stock intact
+
+---
+
+## ⚠️ Important Notes
+
+- This app is designed for **one device per booth**
+- Data does **not sync** across devices
+- Sharing the app link does not share data
+- Do not use incognito/private mode
+
+---
+
+## 🛠 Tech Stack
+
+- **React + TypeScript**
+- **Vite**
+- **IndexedDB (Dexie.js)**
+- **PWA (Service Worker)**
+
+---
+
+## 📄 License
+
+This project is intended for personal and small business use.
+You are free to modify and adapt it for your own needs.
+
+---
+
+## 🙌 Acknowledgements
+
+Built with the goal of helping small creators manage sales more easily at events and conventions.
