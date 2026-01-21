@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { db } from "../db";
-import type { Item } from "../db";
+import { db } from "@/db";
+import type { Item } from "@/db";
+import { ImagePlus } from "lucide-react";
+import { useRef } from "react";
 
 export default function Items() {
   const [items, setItems] = useState<Item[]>([]);
@@ -10,6 +12,7 @@ export default function Items() {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [image, setImage] = useState<string | undefined>();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // edit state
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -17,37 +20,11 @@ export default function Items() {
   const [editPrice, setEditPrice] = useState("");
   const [editImage, setEditImage] = useState<string | undefined>();
 
-  const btnBase: React.CSSProperties = {
-    padding: "6px 14px",
-    borderRadius: 8,
-    border: "1px solid #334155",
-    background: "#1e293b",
-    color: "white",
-    cursor: "pointer",
-    fontSize: 14,
-  };
-
-  const btnIcon: React.CSSProperties = {
-    ...btnBase,
-    width: 32,
-    height: 32,
-    padding: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-
-  const btnPrimary: React.CSSProperties = {
-    ...btnBase,
-    background: "#2563eb",
-    borderColor: "#2563eb",
-  };
-
-  const btnDanger: React.CSSProperties = {
-    ...btnBase,
-    background: "#7f1d1d",
-    borderColor: "#7f1d1d",
-  };
+  // etc
+  const [pulse, setPulse] = useState<{
+    id: number | null;
+    type: "up" | "down" | null;
+  }>({ id: null, type: null });
 
   useEffect(() => {
     refresh();
@@ -57,14 +34,12 @@ export default function Items() {
     setItems(await db.items.toArray());
   };
 
-  /* image helper */
   const readImage = (file: File, cb: (img: string) => void) => {
     const reader = new FileReader();
     reader.onload = () => cb(reader.result as string);
     reader.readAsDataURL(file);
   };
 
-  /* add item */
   const addItem = async () => {
     if (!name || !price || !stock) return;
 
@@ -83,17 +58,23 @@ export default function Items() {
     refresh();
   };
 
-  /* stock update */
   const changeStock = async (id: number, delta: number) => {
     const item = items.find((i) => i.id === id);
-    if (!item) return;
-    if (item.stock + delta < 0) return;
+    if (!item || item.stock + delta < 0) return;
 
     await db.items.update(id, { stock: item.stock + delta });
-    refresh();
+    await refresh();
+
+    setPulse({
+      id,
+      type: delta > 0 ? "up" : "down",
+    });
+
+    setTimeout(() => {
+      setPulse({ id: null, type: null });
+    }, 300);
   };
 
-  /* edit */
   const startEdit = (item: Item) => {
     setEditingId(item.id!);
     setEditName(item.name);
@@ -125,27 +106,21 @@ export default function Items() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Items</h2>
+    <div className="h-full bg-[#020617] text-white p-4 overflow-auto">
+      <h1 className="text-xl font-semibold mb-4">Items</h1>
 
-      {/* ADD FORM */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      {/* ADD ITEM */}
+      <div className="bg-[#0f172a] border border-white/10 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-5 gap-3">
         <input
+          className="col-span-2 px-3 py-2 rounded bg-[#020617] border border-white/10"
           placeholder="Item name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <input
-          type="file"
-          accept="image/*"
-          onChange={(e) =>
-            e.target.files && readImage(e.target.files[0], setImage)
-          }
-        />
-
-        <input
           type="number"
+          className="px-3 py-2 rounded bg-[#020617] border border-white/10"
           placeholder="Price"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
@@ -153,206 +128,235 @@ export default function Items() {
 
         <input
           type="number"
+          className="px-3 py-2 rounded bg-[#020617] border border-white/10"
           placeholder="Stock"
           value={stock}
           onChange={(e) => setStock(e.target.value)}
         />
 
-        <button onClick={addItem}>Add</button>
+        <div className="flex flex-col gap-2 md:col-span-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) =>
+              e.target.files && readImage(e.target.files[0], setImage)
+            }
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 bg-[#020617] border border-white/10 rounded-lg hover:bg-white/10 transition"
+          >
+            <ImagePlus size={18} />
+            <span>Image</span>
+          </button>
+
+          {image && (
+            <div className="w-full h-32 rounded-lg overflow-hidden bg-[#020617] border border-white/10">
+              <img
+                src={image}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          <button
+            onClick={addItem}
+            className="bg-blue-600 px-4 py-2 rounded-lg"
+          >
+            Add
+          </button>
+        </div>
       </div>
 
-      {/* ITEM CARDS */}
-      {items.map((item) => (
-        <div
-          key={item.id}
-          style={{
-            display: "flex",
-            gap: 16,
-            padding: 16,
-            marginBottom: 12,
-            borderRadius: 12,
-            background: "#0f172a",
-            border: "1px solid #1e293b",
-          }}
-        >
-          {/* IMAGE */}
-          <div>
-            {item.image ? (
-              <img
-                src={item.image}
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 8,
-                  objectFit: "cover",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 8,
-                  background: "#1f2937",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  color: "#9ca3af",
-                }}
-              >
-                No Image
-              </div>
-            )}
+      {/* ITEMS GRID */}
+      {items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center py-20 opacity-70">
+          <div className="text-lg font-semibold mb-2">No items yet</div>
+          <div className="text-sm">
+            Add your first item using the form above.
           </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="bg-[#0f172a] border border-white/10 rounded-xl p-4"
+            >
+              {/* IMAGE */}
+              {item.image ? (
+                <div className="w-full h-40 rounded-lg mb-3 overflow-hidden bg-[#020617]">
+                  <img
+                    src={item.image}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-40 bg-[#020617] rounded-lg mb-3 flex items-center justify-center text-sm opacity-60">
+                  No Image
+                </div>
+              )}
 
-          {/* CONTENT */}
-          <div style={{ flex: 1 }}>
-            {editingId === item.id ? (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
-                {/* IMAGE + UPLOAD */}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  {editImage ? (
-                    <img
-                      src={editImage}
-                      style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 8,
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 8,
-                        background: "#1f2937",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 12,
-                        color: "#9ca3af",
-                      }}
-                    >
-                      No Image
-                    </div>
-                  )}
+              {editingId === item.id ? (
+                <div className="space-y-3">
+                  <input
+                    className="w-full px-3 py-2 rounded bg-[#020617] border border-white/10"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                  />
+
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 rounded bg-[#020617] border border-white/10"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                  />
 
                   <input
                     type="file"
                     accept="image/*"
+                    className="hidden"
+                    id={`edit-image-${item.id}`}
                     onChange={(e) =>
                       e.target.files &&
                       readImage(e.target.files[0], setEditImage)
                     }
                   />
-                </div>
 
-                {/* NAME */}
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Item name"
-                  style={{
-                    padding: 10,
-                    borderRadius: 8,
-                    border: "1px solid #334155",
-                    background: "#020617",
-                    color: "white",
-                  }}
-                />
-
-                {/* PRICE */}
-                <input
-                  type="number"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                  placeholder="Price"
-                  style={{
-                    maxWidth: 180,
-                    padding: 10,
-                    borderRadius: 8,
-                    border: "1px solid #334155",
-                    background: "#020617",
-                    color: "white",
-                  }}
-                />
-
-                {/* ACTIONS */}
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={btnPrimary} onClick={() => saveEdit(item.id!)}>
-                    Save
-                  </button>
-
-                  <button style={btnBase} onClick={cancelEdit}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <strong>{item.name}</strong>
-                <div>Rp {item.price}</div>
-                <div>Stock: {item.stock}</div>
-
-                <div
-                  style={{
-                    marginTop: 12,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                  }}
-                >
-                  {/* STOCK CONTROLS */}
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById(`edit-image-${item.id}`)?.click()
+                    }
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-[#020617] border border-white/10 rounded-lg hover:bg-white/10 transition"
                   >
-                    <span style={{ fontSize: 12, opacity: 0.7, minWidth: 50 }}>
-                      Stock
-                    </span>
+                    <ImagePlus size={18} />
+                    <span>Change Image</span>
+                  </button>
 
+                  {editImage && (
+                    <div className="w-full h-32 rounded-lg overflow-hidden bg-[#020617] border border-white/10">
+                      <img
+                        src={editImage}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2 md:col-span-1">
                     <button
-                      style={btnIcon}
-                      onClick={() => changeStock(item.id!, -1)}
+                      onClick={() => saveEdit(item.id!)}
+                      className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg transition"
                     >
-                      −
+                      Save
                     </button>
 
-                    <strong style={{ minWidth: 24, textAlign: "center" }}>
-                      {item.stock}
-                    </strong>
-
                     <button
-                      style={btnIcon}
-                      onClick={() => changeStock(item.id!, 1)}
+                      onClick={cancelEdit}
+                      className="bg-[#020617] border border-white/10 hover:bg-white/10 px-4 py-2 rounded-lg transition"
                     >
-                      +
+                      Cancel
                     </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* NAME + PRICE */}
+                  <div className="mt-2 space-y-1">
+                    <div className="font-semibold text-base">{item.name}</div>
+                    <div className="text-sm opacity-80">
+                      Rp {item.price.toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* STOCK CONTROLS */}
+                  <div className="mt-4 flex flex-col items-center gap-3">
+                    {/* Single +/- */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => changeStock(item.id!, -1)}
+                        className="w-9 h-9 flex items-center justify-center bg-[#020617] border border-white/10 rounded-lg hover:bg-white/10"
+                      >
+                        −
+                      </button>
+
+                      <span
+                        className={`
+                          min-w-[28px] text-center font-semibold transition-all duration-200
+                          ${
+                            pulse.id === item.id && pulse.type === "up"
+                              ? "scale-125 text-green-400"
+                              : ""
+                          }
+                          ${
+                            pulse.id === item.id && pulse.type === "down"
+                              ? "scale-125 text-red-400"
+                              : ""
+                          }
+                        `}
+                      >
+                        {item.stock}
+                      </span>
+
+                      <button
+                        onClick={() => changeStock(item.id!, 1)}
+                        className="w-9 h-9 flex items-center justify-center bg-[#020617] border border-white/10 rounded-lg hover:bg-white/10"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Bulk buttons */}
+                    <div className="flex gap-2 text-xs opacity-80">
+                      <button
+                        onClick={() => changeStock(item.id!, -5)}
+                        className="px-2 py-1 rounded bg-[#020617] border border-white/10 hover:bg-white/10"
+                      >
+                        −5
+                      </button>
+                      <button
+                        onClick={() => changeStock(item.id!, 5)}
+                        className="px-2 py-1 rounded bg-[#020617] border border-white/10 hover:bg-white/10"
+                      >
+                        +5
+                      </button>
+                      <button
+                        onClick={() => changeStock(item.id!, 10)}
+                        className="px-2 py-1 rounded bg-[#020617] border border-white/10 hover:bg-white/10"
+                      >
+                        +10
+                      </button>
+                    </div>
                   </div>
 
                   {/* ACTIONS */}
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button style={btnPrimary} onClick={() => startEdit(item)}>
+                  <div className="mt-5 pt-4 border-t border-white/10 flex gap-2">
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="flex-1 bg-blue-600 py-2 rounded-lg text-sm font-medium"
+                    >
                       Edit
                     </button>
 
                     <button
-                      style={btnDanger}
                       onClick={() => deleteItem(item.id!)}
+                      className="flex-1 bg-red-600 py-2 rounded-lg text-sm font-medium"
                     >
                       Delete
                     </button>
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Checkout from "./pages/Checkout";
+import CheckoutV2 from "./pages/CheckoutV2";
 import Items from "./pages/Items";
 import Recap from "./pages/Recap";
 
@@ -11,22 +11,41 @@ function App() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Content */}
-      <div style={{ flex: 1, padding: 16 }}>
-        {tab === "checkout" && <Checkout />}
-        {tab === "items" && <Items />}
-        {tab === "recap" && <Recap />}
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        {tab === "checkout" && (
+          <div style={{ height: "100%", overflow: "auto" }}>
+            <CheckoutV2 />
+          </div>
+        )}
+        {tab === "items" && (
+          <div style={{ height: "100%", overflow: "auto" }}>
+            <Items />
+          </div>
+        )}
+        {tab === "recap" && (
+          <div style={{ height: "100%", overflow: "auto" }}>
+            <Recap />
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}
-      <div
-        style={{
-          display: "flex",
-          borderTop: "1px solid #ccc",
-        }}
-      >
-        <NavButton label="Checkout" active={tab === "checkout"} onClick={() => setTab("checkout")} />
-        <NavButton label="Items" active={tab === "items"} onClick={() => setTab("items")} />
-        <NavButton label="Recap" active={tab === "recap"} onClick={() => setTab("recap")} />
+      <div style={{ display: "flex", borderTop: "1px solid #1f2937" }}>
+        <NavButton
+          label="Checkout"
+          active={tab === "checkout"}
+          onClick={() => setTab("checkout")}
+        />
+        <NavButton
+          label="Items"
+          active={tab === "items"}
+          onClick={() => setTab("items")}
+        />
+        <NavButton
+          label="Recap"
+          active={tab === "recap"}
+          onClick={() => setTab("recap")}
+        />
       </div>
     </div>
   );
@@ -49,7 +68,7 @@ function NavButton({
         padding: "18px 0",
         fontSize: 18,
         fontWeight: 600,
-        background: active ? "#2563eb" : "#1f2933",
+        background: active ? "#2563eb" : "#020617",
         color: "white",
         border: "none",
       }}
@@ -58,6 +77,5 @@ function NavButton({
     </button>
   );
 }
-
 
 export default App;

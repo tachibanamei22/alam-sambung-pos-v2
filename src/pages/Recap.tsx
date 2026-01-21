@@ -1,139 +1,126 @@
 import { useEffect, useState } from "react";
-import { db } from "../db";
-import type { SaleItem, Sale } from "../db";
+import { db } from "@/db";
+import { getSalesWithItems } from "@/db";
+import type { SaleItem } from "@/db";
 
-type SaleWithItems = {
-  sale: Sale;
-  items: SaleItem[];
-};
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Recap() {
-  const [sales, setSales] = useState<SaleWithItems[]>([]);
-  const [total, setTotal] = useState(0);
+  const [sales, setSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadRecap();
-  }, []);
-
-  const loadRecap = async () => {
-    const saleList = await db.sales.orderBy("createdAt").reverse().toArray();
-
-    const recap: SaleWithItems[] = [];
-
-    for (const sale of saleList) {
-      const items = await db.saleItems
-        .where("saleId")
-        .equals(sale.id!)
-        .toArray();
-
-      recap.push({ sale, items });
-    }
-
-    setSales(recap);
-
-    setTotal(saleList.reduce((sum, s) => sum + s.total, 0));
+  const load = async () => {
+    const data = await getSalesWithItems();
+    setSales(data);
+    setLoading(false);
   };
 
-  const resetEvent = async () => {
-    const ok = confirm(
-      "Reset event?\n\nAll sales history will be permanently deleted.\nItems will remain.",
+  useEffect(() => {
+    load();
+  }, []);
+
+  function exportCsv() {
+    const rows = sales.flatMap((sale) =>
+      sale.items.map(
+        (i: SaleItem) =>
+          `${sale.createdAt},${i.itemName},${i.qty},${i.price},${i.qty * i.price}`,
+      ),
     );
+
+    const csv = ["date,item,qty,price,total", ...rows].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sales.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function resetHistory() {
+    const ok = confirm("Reset ALL sales history?");
     if (!ok) return;
 
     await db.sales.clear();
-    loadRecap(); // re-fetch recap data
-  };
+    await db.saleItems.clear();
+    await load();
+  }
 
-  const exportCSV = () => {
-    const rows = [["Date", "Item", "Qty", "Price", "Total"]];
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-[#020617] text-white">
+        Loading…
+      </div>
+    );
+  }
 
-    sales.forEach(({ sale, items }) => {
-      items.forEach((i) => {
-        rows.push([
-          sale.createdAt.toISOString(),
-          i.itemName,
-          String(i.qty),
-          String(i.price),
-          String(i.price * i.qty),
-        ]);
-      });
-    });
-
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "sales-recap.csv";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  };
+  const totalSales = sales.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <div>
-      <h2>Recap</h2>
-
-      <h3>Total Sales: Rp {total}</h3>
-      <p>Transactions: {sales.length}</p>
-
-      <button
-        onClick={exportCSV}
-        style={{
-          marginBottom: 16,
-          marginRight: 16,
-          padding: "10px 16px",
-          borderRadius: 8,
-          background: "#41db86ff",
-          border: "1px solid #41db86ff",
-          color: "white",
-          fontWeight: "bold",
-          cursor: "pointer",
-        }}
-      >
-        Export CSV
-      </button>
-
-      <button
-        onClick={resetEvent}
-        style={{
-          marginBottom: 16,
-          padding: "10px 16px",
-          borderRadius: 8,
-          background: "#7f1d1d",
-          border: "1px solid #7f1d1d",
-          color: "white",
-          fontWeight: "bold",
-          cursor: "pointer",
-        }}
-      >
-        Reset Recap
-      </button>
-
-      {sales.map(({ sale, items }) => (
-        <div
-          key={sale.id}
-          style={{
-            border: "1px solid #374151",
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 12,
-          }}
-        >
-          <strong>Rp {sale.total}</strong>
-          <br />
-          <small>{sale.createdAt.toLocaleString()}</small>
-
-          <ul style={{ marginTop: 8 }}>
-            {items.map((i, idx) => (
-              <li key={idx}>
-                {i.itemName} × {i.qty} — Rp {i.price * i.qty}
-              </li>
-            ))}
-          </ul>
+    <div className="h-full bg-[#020617] text-white overflow-y-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Recap</h1>
+          <div className="text-sm opacity-70">
+            {sales.length} transactions · Rp {totalSales}
+          </div>
         </div>
-      ))}
+
+        <div className="flex gap-2">
+          <Button
+            onClick={exportCsv}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            Export CSV
+          </Button>
+
+          <Button
+            onClick={resetHistory}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Reset
+          </Button>
+        </div>
+      </div>
+
+      {/* Sales List */}
+      <div className="space-y-4">
+        {sales.map((sale) => (
+          <Card
+            key={sale.id}
+            className="bg-slate-900/70 border border-white/20"
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-300">
+                {new Date(sale.createdAt).toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-2">
+              {sale.items.map((i: SaleItem) => (
+                <div
+                  key={i.id}
+                  className="flex justify-between text-sm text-white"
+                >
+                  <span>
+                    {i.itemName} × {i.qty}
+                  </span>
+                  <span>Rp {i.qty * i.price}</span>
+                </div>
+              ))}
+
+              <div className="pt-2 mt-2 border-t border-white/10 flex justify-between font-semibold text-white">
+                <span>Total</span>
+                <span>Rp {sale.total}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

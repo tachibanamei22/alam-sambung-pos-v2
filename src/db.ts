@@ -8,6 +8,7 @@ export interface Item {
   stock: number;
   image?: string; // base64
   createdAt: Date;
+  creator?: string;
 }
 
 export interface Sale {
@@ -21,7 +22,7 @@ export interface SaleItem {
   saleId: number;
   itemId: number;
   itemName: string; // snapshot (IMPORTANT)
-  price: number;    // snapshot
+  price: number; // snapshot
   qty: number;
 }
 
@@ -41,3 +42,63 @@ export class PosDB extends Dexie {
 }
 
 export const db = new PosDB();
+
+// =====================
+// DB HELPERS
+// =====================
+
+export async function getItems() {
+  return db.items.toArray();
+}
+
+export async function addSale(
+  total: number,
+  items: {
+    itemId: number;
+    itemName: string;
+    price: number;
+    qty: number;
+  }[],
+) {
+  const saleId = await db.sales.add({
+    total,
+    createdAt: new Date(),
+  });
+
+  await db.saleItems.bulkAdd(
+    items.map((i) => ({
+      saleId,
+      itemId: i.itemId,
+      itemName: i.itemName,
+      price: i.price,
+      qty: i.qty,
+    })),
+  );
+
+  for (const i of items) {
+    const item = await db.items.get(i.itemId);
+    if (item) {
+      await db.items.update(i.itemId, {
+        stock: item.stock - i.qty,
+      });
+    }
+  }
+
+  return saleId;
+}
+
+export async function getSalesWithItems() {
+  const sales = await db.sales.toArray();
+
+  const result = [];
+  for (const sale of sales) {
+    const items = await db.saleItems.where("saleId").equals(sale.id!).toArray();
+
+    result.push({
+      ...sale,
+      items,
+    });
+  }
+
+  return result;
+}
