@@ -1,4 +1,4 @@
-# Alam Sambung POS
+# Alam Sambung POS V2
 
 **Alam Sambung POS** is a simple, offline-first Point of Sale (POS) web app built for small merchandise booths, such as anime convention stalls.
 
